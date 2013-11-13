@@ -1,4 +1,4 @@
-sitewhere-mongodb
-=================
+SiteWhere MongoDB Service Provider Implementation
+=================================================
 
-SiteWhere device management implementation on top of MongoDB
+Implementation of SiteWhere core service provider interfaces for MongoDB.
