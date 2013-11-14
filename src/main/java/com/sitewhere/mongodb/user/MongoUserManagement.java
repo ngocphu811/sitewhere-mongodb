@@ -16,18 +16,15 @@ import java.util.List;
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.springframework.security.authentication.encoding.MessageDigestPasswordEncoder;
-import org.springframework.security.authentication.encoding.ShaPasswordEncoder;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
-import com.sitewhere.core.device.SiteWherePersistence;
+import com.sitewhere.core.SiteWherePersistence;
 import com.sitewhere.mongodb.MongoPersistence;
 import com.sitewhere.mongodb.SiteWhereMongoClient;
 import com.sitewhere.mongodb.common.MongoSiteWhereEntity;
-import com.sitewhere.rest.model.common.MetadataProvider;
 import com.sitewhere.rest.model.user.GrantedAuthority;
 import com.sitewhere.rest.model.user.GrantedAuthoritySearchCriteria;
 import com.sitewhere.rest.model.user.User;
@@ -55,9 +52,6 @@ public class MongoUserManagement implements IUserManagement {
 
 	/** Injected with global SiteWhere Mongo client */
 	private SiteWhereMongoClient mongoClient;
-
-	/** Password encoder */
-	private MessageDigestPasswordEncoder passwordEncoder = new ShaPasswordEncoder();
 
 	/*
 	 * (non-Javadoc)
@@ -90,17 +84,7 @@ public class MongoUserManagement implements IUserManagement {
 			throw new SiteWhereSystemException(ErrorCode.DuplicateUser, ErrorLevel.ERROR,
 					HttpServletResponse.SC_CONFLICT);
 		}
-		User user = new User();
-		user.setUsername(request.getUsername());
-		user.setHashedPassword(passwordEncoder.encodePassword(request.getPassword(), null));
-		user.setFirstName(request.getFirstName());
-		user.setLastName(request.getLastName());
-		user.setLastLogin(null);
-		user.setStatus(request.getStatus());
-		user.setAuthorities(request.getAuthorities());
-
-		MetadataProvider.copy(request, user);
-		SiteWherePersistence.initializeEntityMetadata(user);
+		User user = SiteWherePersistence.userCreateLogic(request);
 
 		DBCollection users = getMongoClient().getUsersCollection();
 		DBObject created = MongoUser.toDBObject(user);
@@ -120,7 +104,7 @@ public class MongoUserManagement implements IUserManagement {
 					HttpServletResponse.SC_BAD_REQUEST);
 		}
 		DBObject userObj = assertUser(username);
-		String inPassword = passwordEncoder.encodePassword(password, null);
+		String inPassword = SiteWherePersistence.encodePassoword(password);
 		User match = MongoUser.fromDBObject(userObj);
 		if (!match.getHashedPassword().equals(inPassword)) {
 			throw new SiteWhereSystemException(ErrorCode.InvalidPassword, ErrorLevel.ERROR,
@@ -148,29 +132,8 @@ public class MongoUserManagement implements IUserManagement {
 
 		// Copy any non-null fields.
 		User updatedUser = MongoUser.fromDBObject(existing);
-		if (request.getUsername() != null) {
-			updatedUser.setUsername(request.getUsername());
-		}
-		if (request.getPassword() != null) {
-			updatedUser.setHashedPassword(passwordEncoder.encodePassword(request.getPassword(), null));
-		}
-		if (request.getFirstName() != null) {
-			updatedUser.setFirstName(request.getFirstName());
-		}
-		if (request.getLastName() != null) {
-			updatedUser.setLastName(request.getLastName());
-		}
-		if (request.getStatus() != null) {
-			updatedUser.setStatus(request.getStatus());
-		}
-		if (request.getAuthorities() != null) {
-			updatedUser.setAuthorities(request.getAuthorities());
-		}
-		if ((request.getMetadata() != null) && (request.getMetadata().size() > 0)) {
-			updatedUser.getMetadata().clear();
-			MetadataProvider.copy(request, updatedUser);
-		}
-		SiteWherePersistence.setUpdatedEntityMetadata(updatedUser);
+		SiteWherePersistence.userUpdateLogic(request, updatedUser);
+
 		DBObject updated = MongoUser.toDBObject(updatedUser);
 
 		DBCollection users = getMongoClient().getUsersCollection();

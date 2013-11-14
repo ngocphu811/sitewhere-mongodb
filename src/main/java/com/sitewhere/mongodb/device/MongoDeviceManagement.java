@@ -23,7 +23,7 @@ import org.bson.types.ObjectId;
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
 import com.mongodb.DBObject;
-import com.sitewhere.core.device.SiteWherePersistence;
+import com.sitewhere.core.SiteWherePersistence;
 import com.sitewhere.mongodb.MongoPersistence;
 import com.sitewhere.mongodb.SiteWhereMongoClient;
 import com.sitewhere.mongodb.common.MongoMetadataProvider;
