@@ -33,9 +33,6 @@ public class MongoDeviceAlert implements MongoConverter<IDeviceAlert> {
 	/** Property for message */
 	public static final String PROP_MESSAGE = "message";
 
-	/** Property for acknowledged */
-	public static final String PROP_ACKNOWLEDGED = "acknowledged";
-
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -66,7 +63,6 @@ public class MongoDeviceAlert implements MongoConverter<IDeviceAlert> {
 		target.append(PROP_SOURCE, source.getSource().name());
 		target.append(PROP_TYPE, source.getType());
 		target.append(PROP_MESSAGE, source.getMessage());
-		target.append(PROP_ACKNOWLEDGED, source.isAcknowledged());
 	}
 
 	/**
@@ -81,14 +77,12 @@ public class MongoDeviceAlert implements MongoConverter<IDeviceAlert> {
 		String sourceName = (String) source.get(PROP_SOURCE);
 		String type = (String) source.get(PROP_TYPE);
 		String message = (String) source.get(PROP_MESSAGE);
-		Boolean acked = (Boolean) source.get(PROP_ACKNOWLEDGED);
 
 		if (sourceName != null) {
 			target.setSource(AlertSource.valueOf(sourceName));
 		}
 		target.setType(type);
 		target.setMessage(message);
-		target.setAcknowledged(acked);
 	}
 
 	/**

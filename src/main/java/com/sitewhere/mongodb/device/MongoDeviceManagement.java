@@ -11,14 +11,12 @@
 package com.sitewhere.mongodb.device;
 
 import java.util.Calendar;
-import java.util.Date;
 import java.util.List;
 import java.util.UUID;
 
 import javax.servlet.http.HttpServletResponse;
 
 import org.apache.log4j.Logger;
-import org.bson.types.ObjectId;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBCollection;
@@ -41,10 +39,8 @@ import com.sitewhere.rest.service.search.SearchResults;
 import com.sitewhere.spi.SiteWhereException;
 import com.sitewhere.spi.SiteWhereSystemException;
 import com.sitewhere.spi.common.IDateRangeSearchCriteria;
-import com.sitewhere.spi.common.IMeasurementEntry;
 import com.sitewhere.spi.common.IMetadataProvider;
 import com.sitewhere.spi.common.ISearchCriteria;
-import com.sitewhere.spi.device.AlertSource;
 import com.sitewhere.spi.device.DeviceAssignmentStatus;
 import com.sitewhere.spi.device.IDevice;
 import com.sitewhere.spi.device.IDeviceAlert;
@@ -406,7 +402,7 @@ public class MongoDeviceManagement implements IDeviceManagement {
 			throws SiteWhereException {
 		DBObject match = assertDeviceAssignment(token);
 		DeviceAssignment assignment = MongoDeviceAssignment.fromDBObject(match);
-		DeviceLocation location = createDeviceLocationForRequest(assignment, request);
+		DeviceLocation location = SiteWherePersistence.deviceLocationCreateLogic(assignment, request);
 		MongoDeviceAssignment.setLocation(location, match);
 		DBCollection assignments = getMongoClient().getDeviceAssignmentsCollection();
 		BasicDBObject query = new BasicDBObject(MongoDeviceAssignment.PROP_TOKEN, token);
@@ -536,15 +532,8 @@ public class MongoDeviceManagement implements IDeviceManagement {
 	 */
 	public IDeviceMeasurements addDeviceMeasurements(IDeviceAssignment assignment,
 			IDeviceMeasurementsCreateRequest request) throws SiteWhereException {
-		DeviceMeasurements measurements = new DeviceMeasurements();
-		measurements.setSiteToken(assignment.getSiteToken());
-		measurements.setDeviceAssignmentToken(assignment.getToken());
-		measurements.setEventDate(request.getEventDate());
-		measurements.setReceivedDate(new Date());
-		for (IMeasurementEntry entry : request.getMeasurements()) {
-			measurements.addOrReplaceMeasurement(entry.getName(), entry.getValue());
-		}
-		MetadataProvider.copy(request, measurements);
+		DeviceMeasurements measurements = SiteWherePersistence.deviceMeasurementsCreateLogic(request,
+				assignment);
 
 		DBCollection measurementColl = getMongoClient().getMeasurementsCollection();
 		DBObject mObject = MongoDeviceMeasurements.toDBObject(measurements);
@@ -596,26 +585,12 @@ public class MongoDeviceManagement implements IDeviceManagement {
 	 */
 	public IDeviceLocation addDeviceLocation(IDeviceAssignment assignment,
 			IDeviceLocationCreateRequest request) throws SiteWhereException {
-		DeviceLocation location = createDeviceLocationForRequest(assignment, request);
+		DeviceLocation location = SiteWherePersistence.deviceLocationCreateLogic(assignment, request);
 
 		DBCollection locationsColl = getMongoClient().getLocationsCollection();
 		DBObject locObject = MongoDeviceLocation.toDBObject(location);
 		MongoPersistence.insert(locationsColl, locObject);
 		return MongoDeviceLocation.fromDBObject(locObject);
-	}
-
-	protected DeviceLocation createDeviceLocationForRequest(IDeviceAssignment assignment,
-			IDeviceLocationCreateRequest request) {
-		DeviceLocation location = new DeviceLocation();
-		location.setSiteToken(assignment.getSiteToken());
-		location.setDeviceAssignmentToken(assignment.getToken());
-		location.setEventDate(request.getEventDate());
-		location.setReceivedDate(new Date());
-		location.setLatitude(request.getLatitude());
-		location.setLongitude(request.getLongitude());
-		location.setElevation(request.getElevation());
-		MetadataProvider.copy(request, location);
-		return location;
 	}
 
 	/*
@@ -674,48 +649,12 @@ public class MongoDeviceManagement implements IDeviceManagement {
 	 * (non-Javadoc)
 	 * 
 	 * @see
-	 * com.sitewhere.spi.device.IDeviceManagement#associateAlertWithLocation(java.lang
-	 * .String, java.lang.String)
-	 */
-	public IDeviceLocation associateAlertWithLocation(String alertId, String locationId)
-			throws SiteWhereException {
-		// Make sure the location id reference is valid.
-		DBObject locObj = assertDeviceLocation(locationId);
-		IDeviceLocation location = MongoDeviceLocation.fromDBObject(locObj);
-
-		// Make sure the alert id reference is valid.
-		assertDeviceAlert(alertId);
-
-		// If alert id is not already in the list, add it.
-		List<String> alertIds = location.getAlertIds();
-		if (!alertIds.contains(alertId)) {
-			alertIds.add(alertId);
-			locObj.put(MongoDeviceEvent.PROP_ALERT_IDS, alertIds);
-			DBObject query = new BasicDBObject(MongoDeviceEvent.PROP_EVENT_ID, new ObjectId(locationId));
-			MongoPersistence.update(getMongoClient().getLocationsCollection(), query, locObj);
-		}
-		return MongoDeviceLocation.fromDBObject(locObj);
-	}
-
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see
 	 * com.sitewhere.spi.device.IDeviceManagement#addDeviceAlert(com.sitewhere.spi.device
 	 * .IDeviceAssignment, com.sitewhere.spi.device.request.IDeviceAlertCreateRequest)
 	 */
 	public IDeviceAlert addDeviceAlert(IDeviceAssignment assignment, IDeviceAlertCreateRequest request)
 			throws SiteWhereException {
-		DeviceAlert alert = new DeviceAlert();
-		alert.setSiteToken(assignment.getSiteToken());
-		alert.setDeviceAssignmentToken(assignment.getToken());
-		alert.setEventDate(request.getEventDate());
-		alert.setReceivedDate(new Date());
-		alert.setSource(AlertSource.Device);
-		alert.setType(request.getType());
-		alert.setMessage(request.getMessage());
-		alert.setAcknowledged(false);
-		MetadataProvider.copy(request, alert);
+		DeviceAlert alert = SiteWherePersistence.deviceAlertCreateLogic(assignment, request);
 
 		DBCollection alertsColl = getMongoClient().getAlertsCollection();
 		DBObject alertObject = MongoDeviceAlert.toDBObject(alert);
@@ -1015,93 +954,6 @@ public class MongoDeviceManagement implements IDeviceManagement {
 		DBObject match = getZoneDBObjectByToken(token);
 		if (match == null) {
 			throw new SiteWhereSystemException(ErrorCode.InvalidZoneToken, ErrorLevel.ERROR);
-		}
-		return match;
-	}
-
-	/**
-	 * Find a device location by unique event id.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject getDeviceLocationById(String id) throws SiteWhereException {
-		DBCollection coll = getMongoClient().getLocationsCollection();
-		BasicDBObject query = new BasicDBObject(MongoDeviceEvent.PROP_EVENT_ID, new ObjectId(id));
-		return coll.findOne(query);
-	}
-
-	/**
-	 * Return the {@link DBObject} for the device location with the given id. Throws an
-	 * exception if the id is not valid.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject assertDeviceLocation(String id) throws SiteWhereException {
-		DBObject match = getDeviceLocationById(id);
-		if (match == null) {
-			throw new SiteWhereSystemException(ErrorCode.InvalidDeviceLocationId, ErrorLevel.ERROR);
-		}
-		return match;
-	}
-
-	/**
-	 * Find a device measurements by unique event id.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject getDeviceMeasurementsById(String id) throws SiteWhereException {
-		DBCollection coll = getMongoClient().getMeasurementsCollection();
-		BasicDBObject query = new BasicDBObject(MongoDeviceEvent.PROP_EVENT_ID, new ObjectId(id));
-		return coll.findOne(query);
-	}
-
-	/**
-	 * Return the {@link DBObject} for the device measurements with the given id. Throws
-	 * an exception if the id is not valid.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject assertDeviceMeasurements(String id) throws SiteWhereException {
-		DBObject match = getDeviceMeasurementsById(id);
-		if (match == null) {
-			throw new SiteWhereSystemException(ErrorCode.InvalidDeviceMeasurementsId, ErrorLevel.ERROR);
-		}
-		return match;
-	}
-
-	/**
-	 * Find a device alert by unique event id.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject getDeviceAlertById(String id) throws SiteWhereException {
-		DBCollection coll = getMongoClient().getAlertsCollection();
-		BasicDBObject query = new BasicDBObject(MongoDeviceEvent.PROP_EVENT_ID, new ObjectId(id));
-		return coll.findOne(query);
-	}
-
-	/**
-	 * Return the {@link DBObject} for the device alert with the given id. Throws an
-	 * exception if the id is not valid.
-	 * 
-	 * @param id
-	 * @return
-	 * @throws SiteWhereException
-	 */
-	protected DBObject assertDeviceAlert(String id) throws SiteWhereException {
-		DBObject match = getDeviceAlertById(id);
-		if (match == null) {
-			throw new SiteWhereSystemException(ErrorCode.InvalidDeviceAlertId, ErrorLevel.ERROR);
 		}
 		return match;
 	}
