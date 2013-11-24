@@ -82,6 +82,33 @@ public class MongoDeviceManagement implements IDeviceManagement {
 	 */
 	public void start() throws SiteWhereException {
 		LOGGER.info("Mongo device management started.");
+
+		/** Ensure that collection indexes exist */
+		ensureIndexes();
+	}
+
+	/**
+	 * Ensure that expected collection indexes exist.
+	 * 
+	 * @throws SiteWhereException
+	 */
+	protected void ensureIndexes() throws SiteWhereException {
+		getMongoClient().getSitesCollection().ensureIndex(new BasicDBObject("token", 1),
+				new BasicDBObject("unique", true));
+		getMongoClient().getDevicesCollection().ensureIndex(new BasicDBObject("hardwareId", 1),
+				new BasicDBObject("unique", true));
+		getMongoClient().getDeviceAssignmentsCollection().ensureIndex(new BasicDBObject("token", 1),
+				new BasicDBObject("unique", true));
+		getMongoClient().getDeviceAssignmentsCollection().ensureIndex(
+				new BasicDBObject("lastLocation.latLong", "2d").append("lastLocation.eventDate", -1));
+		getMongoClient().getLocationsCollection().ensureIndex(
+				new BasicDBObject("latLong", "2d").append("eventDate", -1));
+		getMongoClient().getLocationsCollection().ensureIndex(
+				new BasicDBObject("deviceAssignmentToken", 1).append("eventDate", -1));
+		getMongoClient().getMeasurementsCollection().ensureIndex(
+				new BasicDBObject("deviceAssignmentToken", 1).append("eventDate", -1));
+		getMongoClient().getAlertsCollection().ensureIndex(
+				new BasicDBObject("deviceAssignmentToken", 1).append("eventDate", -1));
 	}
 
 	/*

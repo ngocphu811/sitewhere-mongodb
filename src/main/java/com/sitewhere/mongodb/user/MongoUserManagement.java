@@ -60,6 +60,21 @@ public class MongoUserManagement implements IUserManagement {
 	 */
 	public void start() throws SiteWhereException {
 		LOGGER.info("Mongo user management started.");
+
+		/** Ensure that expected indexes exist */
+		ensureIndexes();
+	}
+
+	/**
+	 * Ensure that expected collection indexes exist.
+	 * 
+	 * @throws SiteWhereException
+	 */
+	protected void ensureIndexes() throws SiteWhereException {
+		getMongoClient().getUsersCollection().ensureIndex(new BasicDBObject("username", 1),
+				new BasicDBObject("unique", true));
+		getMongoClient().getAuthoritiesCollection().ensureIndex(new BasicDBObject("authority", 1),
+				new BasicDBObject("unique", true));
 	}
 
 	/*
