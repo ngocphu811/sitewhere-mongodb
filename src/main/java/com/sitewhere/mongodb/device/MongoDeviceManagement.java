@@ -35,12 +35,10 @@ import com.sitewhere.rest.model.device.DeviceLocation;
 import com.sitewhere.rest.model.device.DeviceMeasurements;
 import com.sitewhere.rest.model.device.Site;
 import com.sitewhere.rest.model.device.Zone;
-import com.sitewhere.rest.service.search.SearchResults;
+import com.sitewhere.rest.model.search.SearchResults;
 import com.sitewhere.spi.SiteWhereException;
 import com.sitewhere.spi.SiteWhereSystemException;
-import com.sitewhere.spi.common.IDateRangeSearchCriteria;
 import com.sitewhere.spi.common.IMetadataProvider;
-import com.sitewhere.spi.common.ISearchCriteria;
 import com.sitewhere.spi.device.DeviceAssignmentStatus;
 import com.sitewhere.spi.device.IDevice;
 import com.sitewhere.spi.device.IDeviceAlert;
@@ -61,6 +59,8 @@ import com.sitewhere.spi.device.request.ISiteCreateRequest;
 import com.sitewhere.spi.device.request.IZoneCreateRequest;
 import com.sitewhere.spi.error.ErrorCode;
 import com.sitewhere.spi.error.ErrorLevel;
+import com.sitewhere.spi.search.IDateRangeSearchCriteria;
+import com.sitewhere.spi.search.ISearchCriteria;
 
 /**
  * Device management implementation that uses MongoDB for persistence.

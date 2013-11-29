@@ -17,10 +17,10 @@ import com.mongodb.DBCollection;
 import com.mongodb.DBCursor;
 import com.mongodb.DBObject;
 import com.mongodb.WriteResult;
-import com.sitewhere.rest.service.search.SearchResults;
+import com.sitewhere.rest.model.search.SearchResults;
 import com.sitewhere.spi.SiteWhereException;
-import com.sitewhere.spi.common.IDateRangeSearchCriteria;
-import com.sitewhere.spi.common.ISearchCriteria;
+import com.sitewhere.spi.search.IDateRangeSearchCriteria;
+import com.sitewhere.spi.search.ISearchCriteria;
 
 /**
  * Common handlers for persisting Mongo data.
