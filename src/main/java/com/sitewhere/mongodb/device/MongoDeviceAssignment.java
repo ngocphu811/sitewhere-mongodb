@@ -18,11 +18,11 @@ import com.sitewhere.mongodb.MongoConverter;
 import com.sitewhere.mongodb.common.MongoMetadataProvider;
 import com.sitewhere.mongodb.common.MongoSiteWhereEntity;
 import com.sitewhere.rest.model.device.DeviceAssignment;
-import com.sitewhere.rest.model.device.DeviceLocation;
+import com.sitewhere.rest.model.device.DeviceAssignmentState;
 import com.sitewhere.spi.device.DeviceAssignmentStatus;
 import com.sitewhere.spi.device.DeviceAssignmentType;
 import com.sitewhere.spi.device.IDeviceAssignment;
-import com.sitewhere.spi.device.IDeviceLocation;
+import com.sitewhere.spi.device.IDeviceAssignmentState;
 
 /**
  * Used to load or save device assignment data to MongoDB.
@@ -55,8 +55,8 @@ public class MongoDeviceAssignment implements MongoConverter<IDeviceAssignment> 
 	/** Property for site token */
 	public static final String PROP_SITE_TOKEN = "siteToken";
 
-	/** Property for last location */
-	public static final String PROP_LAST_LOCATION = "lastLocation";
+	/** Property for assignment state */
+	public static final String PROP_STATE = "state";
 
 	/*
 	 * (non-Javadoc)
@@ -100,8 +100,8 @@ public class MongoDeviceAssignment implements MongoConverter<IDeviceAssignment> 
 		target.append(PROP_DEVICE_HARDWARE_ID, source.getDeviceHardwareId());
 		target.append(PROP_SITE_TOKEN, source.getSiteToken());
 
-		if (source.getLastLocation() != null) {
-			setLocation(source.getLastLocation(), target);
+		if (source.getState() != null) {
+			setState(source.getState(), target);
 		}
 
 		MongoSiteWhereEntity.toDBObject(source, target);
@@ -109,15 +109,15 @@ public class MongoDeviceAssignment implements MongoConverter<IDeviceAssignment> 
 	}
 
 	/**
-	 * Set location fields for the assignment.
+	 * Set state information for the assignment.
 	 * 
 	 * @param source
 	 * @param target
 	 */
-	public static void setLocation(IDeviceLocation source, DBObject target) {
-		BasicDBObject location = new BasicDBObject();
-		MongoDeviceLocation.toDBObject(source, location);
-		target.put(PROP_LAST_LOCATION, location);
+	public static void setState(IDeviceAssignmentState source, DBObject target) {
+		BasicDBObject state = new BasicDBObject();
+		MongoDeviceAssignmentState.toDBObject(source, state);
+		target.put(PROP_STATE, state);
 	}
 
 	/**
@@ -153,10 +153,10 @@ public class MongoDeviceAssignment implements MongoConverter<IDeviceAssignment> 
 		target.setDeviceHardwareId(deviceHardwareId);
 		target.setSiteToken(siteToken);
 
-		DBObject lastLocation = (DBObject) source.get(PROP_LAST_LOCATION);
-		if (lastLocation != null) {
-			IDeviceLocation location = MongoDeviceLocation.fromDBObject(lastLocation);
-			target.setLastLocation(DeviceLocation.copy(location));
+		DBObject sstate = (DBObject) source.get(PROP_STATE);
+		if (sstate != null) {
+			DeviceAssignmentState state = MongoDeviceAssignmentState.fromDBObject(sstate);
+			target.setState(state);
 		}
 
 		MongoSiteWhereEntity.fromDBObject(source, target);
