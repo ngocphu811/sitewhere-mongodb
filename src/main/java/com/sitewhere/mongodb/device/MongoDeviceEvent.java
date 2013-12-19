@@ -12,6 +12,8 @@ package com.sitewhere.mongodb.device;
 
 import java.util.Date;
 
+import org.bson.types.ObjectId;
+
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.sitewhere.mongodb.common.MongoMetadataProvider;
@@ -68,6 +70,7 @@ public class MongoDeviceEvent {
 	 * @param target
 	 */
 	public static void fromDBObject(DBObject source, DeviceEvent target) {
+		ObjectId id = (ObjectId) source.get("_id");
 		String siteToken = (String) source.get(PROP_SITE_TOKEN);
 		String assignmentToken = (String) source.get(PROP_DEVICE_ASSIGNMENT_TOKEN);
 		String assignmentType = (String) source.get(PROP_DEVICE_ASSIGNMENT_TYPE);
@@ -75,12 +78,15 @@ public class MongoDeviceEvent {
 		Date eventDate = (Date) source.get(PROP_EVENT_DATE);
 		Date receivedDate = (Date) source.get(PROP_RECEIVED_DATE);
 
+		if (id != null) {
+			target.setId(id.toString());
+		}
 		target.setSiteToken(siteToken);
 		target.setDeviceAssignmentToken(assignmentToken);
 		target.setAssetId(assetId);
 		target.setEventDate(eventDate);
 		target.setReceivedDate(receivedDate);
-		
+
 		if (assignmentType != null) {
 			target.setAssignmentType(DeviceAssignmentType.valueOf(assignmentType));
 		}
