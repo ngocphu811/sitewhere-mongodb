@@ -1,12 +1,12 @@
 /*
-* $Id$
-* --------------------------------------------------------------------------------------
-* Copyright (c) Reveal Technologies, LLC. All rights reserved. http://www.reveal-tech.com
-*
-* The software in this package is published under the terms of the CPAL v1.0
-* license, a copy of which has been included with this distribution in the
-* LICENSE.txt file.
-*/
+ * $Id$
+ * --------------------------------------------------------------------------------------
+ * Copyright (c) Reveal Technologies, LLC. All rights reserved. http://www.reveal-tech.com
+ *
+ * The software in this package is published under the terms of the CPAL v1.0
+ * license, a copy of which has been included with this distribution in the
+ * LICENSE.txt file.
+ */
 
 package com.sitewhere.mongodb.common;
 
@@ -15,7 +15,6 @@ import java.util.List;
 
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
-import com.sitewhere.spi.common.IMetadataEntry;
 import com.sitewhere.spi.common.IMetadataProvider;
 
 /**
@@ -53,10 +52,10 @@ public class MongoMetadataProvider {
 	 */
 	public static void toDBObject(String propertyName, IMetadataProvider source, DBObject target) {
 		List<BasicDBObject> props = new ArrayList<BasicDBObject>();
-		for (IMetadataEntry entry : source.getMetadata()) {
+		for (String key : source.getMetadata().keySet()) {
 			BasicDBObject prop = new BasicDBObject();
-			prop.put(PROP_NAME, entry.getName());
-			prop.put(PROP_VALUE, entry.getValue());
+			prop.put(PROP_NAME, key);
+			prop.put(PROP_VALUE, source.getMetadata(key));
 			props.add(prop);
 		}
 		target.put(propertyName, props);
