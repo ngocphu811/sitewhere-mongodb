@@ -10,9 +10,6 @@
 
 package com.sitewhere.mongodb.common;
 
-import java.util.ArrayList;
-import java.util.List;
-
 import com.mongodb.BasicDBObject;
 import com.mongodb.DBObject;
 import com.sitewhere.spi.common.IMetadataProvider;
@@ -26,12 +23,6 @@ public class MongoMetadataProvider {
 
 	/** Property for entity metadata */
 	public static final String PROP_METADATA = "metadata";
-
-	/** Attribute name for measurement name */
-	private static final String PROP_NAME = "name";
-
-	/** Attribute name for measurement value */
-	private static final String PROP_VALUE = "value";
 
 	/**
 	 * Store data into a DBObject using default property name.
@@ -51,14 +42,11 @@ public class MongoMetadataProvider {
 	 * @param target
 	 */
 	public static void toDBObject(String propertyName, IMetadataProvider source, DBObject target) {
-		List<BasicDBObject> props = new ArrayList<BasicDBObject>();
+		BasicDBObject metadata = new BasicDBObject();
 		for (String key : source.getMetadata().keySet()) {
-			BasicDBObject prop = new BasicDBObject();
-			prop.put(PROP_NAME, key);
-			prop.put(PROP_VALUE, source.getMetadata(key));
-			props.add(prop);
+			metadata.put(key, source.getMetadata(key));
 		}
-		target.put(propertyName, props);
+		target.put(propertyName, metadata);
 	}
 
 	/**
@@ -78,14 +66,11 @@ public class MongoMetadataProvider {
 	 * @param source
 	 * @param target
 	 */
-	@SuppressWarnings("unchecked")
 	public static void fromDBObject(String propertyName, DBObject source, IMetadataProvider target) {
-		List<DBObject> props = (List<DBObject>) source.get(propertyName);
-		if (props != null) {
-			for (DBObject prop : props) {
-				String name = (String) prop.get(PROP_NAME);
-				String value = (String) prop.get(PROP_VALUE);
-				target.addOrReplaceMetadata(name, value);
+		DBObject metadata = (DBObject) source.get(propertyName);
+		if (metadata != null) {
+			for (String key : metadata.keySet()) {
+				target.addOrReplaceMetadata(key, (String) metadata.get(key));
 			}
 		}
 	}
