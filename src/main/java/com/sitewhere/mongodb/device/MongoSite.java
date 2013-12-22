@@ -16,6 +16,7 @@ import com.sitewhere.mongodb.MongoConverter;
 import com.sitewhere.mongodb.common.MongoMetadataProvider;
 import com.sitewhere.mongodb.common.MongoSiteWhereEntity;
 import com.sitewhere.rest.model.device.Site;
+import com.sitewhere.rest.model.device.SiteMapData;
 import com.sitewhere.spi.device.ISite;
 
 /**
@@ -37,11 +38,14 @@ public class MongoSite implements MongoConverter<ISite> {
 	/** Property for token */
 	public static final String PROP_TOKEN = "token";
 
+	/** Property for map data */
+	public static final String PROP_MAP_DATA = "mapData";
+
 	/** Property for map type */
-	public static final String PROP_MAP_TYPE = "mapType";
+	public static final String PROP_MAP_TYPE = "type";
 
 	/** Property for map metadata */
-	public static final String PROP_MAP_METADATA = "mapMetadata";
+	public static final String PROP_MAP_METADATA = "metadata";
 
 	/*
 	 * (non-Javadoc)
@@ -71,11 +75,14 @@ public class MongoSite implements MongoConverter<ISite> {
 		target.append(PROP_NAME, source.getName());
 		target.append(PROP_DESCRIPTION, source.getDescription());
 		target.append(PROP_IMAGE_URL, source.getImageUrl());
-		target.append(PROP_MAP_TYPE, source.getMapType());
 		target.append(PROP_TOKEN, source.getToken());
 
+		BasicDBObject mapData = new BasicDBObject();
+		mapData.append(PROP_MAP_TYPE, source.getMap().getType());
+		MongoMetadataProvider.toDBObject(PROP_MAP_METADATA, source.getMap(), mapData);
+		target.append(PROP_MAP_DATA, mapData);
+
 		MongoSiteWhereEntity.toDBObject(source, target);
-		MongoMetadataProvider.toDBObject(PROP_MAP_METADATA, source.getMapMetadata(), target);
 		MongoMetadataProvider.toDBObject(source, target);
 	}
 
@@ -90,16 +97,22 @@ public class MongoSite implements MongoConverter<ISite> {
 		String description = (String) source.get(PROP_DESCRIPTION);
 		String imageUrl = (String) source.get(PROP_IMAGE_URL);
 		String token = (String) source.get(PROP_TOKEN);
-		String mapType = (String) source.get(PROP_MAP_TYPE);
+
+		DBObject mdo = (DBObject) source.get(PROP_MAP_DATA);
+		if (mdo != null) {
+			SiteMapData mapData = new SiteMapData();
+			MongoMetadataProvider.fromDBObject(PROP_MAP_METADATA, mdo, mapData);
+			String type = (String) mdo.get(PROP_MAP_TYPE);
+			mapData.setType(type);
+			target.setMap(mapData);
+		}
 
 		target.setName(name);
 		target.setDescription(description);
 		target.setImageUrl(imageUrl);
 		target.setToken(token);
-		target.setMapType(mapType);
 
 		MongoSiteWhereEntity.fromDBObject(source, target);
-		MongoMetadataProvider.fromDBObject(PROP_MAP_METADATA, source, target.getMapMetadata());
 		MongoMetadataProvider.fromDBObject(source, target);
 	}
 
